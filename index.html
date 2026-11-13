@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Observador Global | Periodismo Independiente y Riguroso</title>
+    
+    <!-- Tailwind CSS vía CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Playfair Display (Editorial Serif) & Inter (Sans-serif) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        paper: '#FAF9F6',
+                        ink: '#121212',
+                        crimson: '#991B1B',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .animate-ticker {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: ticker 35s linear infinite;
+        }
+        .animate-ticker:hover {
+            animation-play-state: paused;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .editorial-border {
+            border-bottom: 3px double currentColor;
+        }
+    </style>
+</head>
+<body class="bg-paper text-ink dark:bg-zinc-950 dark:text-zinc-100 font-sans transition-colors duration-300 antialiased selection:bg-red-800 selection:text-white">
+
+    <!-- Notificación Toast Flotante -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 border border-zinc-700 dark:border-zinc-300">
+        <span id="toast-icon" class="text-emerald-400 dark:text-emerald-600 font-bold">✓</span>
+        <p id="toast-message" class="text-sm font-medium">Acción completada</p>
+    </div>
+
+    <!-- BARRA SUPERIOR DE UTILIDADES -->
+    <div class="border-b border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-4 text-zinc-600 dark:text-zinc-400 font-medium">
+                <span>Jueves, 12 de noviembre de 2026</span>
+                <span class="hidden sm:inline">•</span>
+                <span class="hidden sm:inline">Edición Nacional e Internacional</span>
+                <span class="hidden md:inline">•</span>
+                <span class="hidden md:inline text-emerald-700 dark:text-emerald-400 font-semibold">Dólar: $19.45 MXN</span>
+            </div>
+            <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+                <button id="edit-mode-toggle" onclick="toggleGlobalEditMode()" title="Resaltar todas las imágenes editables" class="p-1.5 px-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 font-semibold">
+                    <span>📷</span>
+                    <span id="edit-mode-label">Modo Edición: OFF</span>
+                </button>
+                <button id="reset-images-btn" onclick="resetAllCustomImages()" class="hidden p-1.5 px-2.5 rounded-lg border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition flex items-center gap-1 font-semibold">
+                    <span>↺</span>
+                    <span class="hidden sm:inline">Restaurar fotos</span>
+                </button>
+                <button id="theme-toggle" aria-label="Alternar tema" class="p-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                    <svg id="sun-icon" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="moon-icon" class="w-4 h-4 block dark:hidden text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <span class="hidden sm:inline" id="theme-label">Modo Oscuro</span>
+                </button>
+                <button onclick="scrollToNewsletter()" class="bg-red-800 hover:bg-red-900 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
+                    Suscribirse
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CABECERA EDITORIAL -->
+    <header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 editorial-border border-zinc-900 dark:border-zinc-200">
+            <div class="hidden lg:block w-1/4 text-xs text-zinc-500 dark:text-zinc-400 italic border-l-2 border-red-800 pl-3">
+                "La verdad como compromiso inquebrantable con la sociedad libre."
+            </div>
+            <div class="text-center flex-1">
+                <a href="#" onclick="filterByCategory('Todas')" class="inline-block group">
+                    <h1 class="font-serif text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-zinc-950 dark:text-white uppercase">
+                        El Observador Global
+                    </h1>
+                    <p class="text-[11px] sm:text-xs tracking-[0.25em] uppercase text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">
+                        Diario de Análisis, Política, Economía y Cultura • Año XCIV
+                    </p>
+                </a>
+            </div>
+            <div class="w-full md:w-auto lg:w-1/4 flex justify-end">
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="search-input" placeholder="Buscar noticias, temas..." 
+                        class="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800 dark:focus:ring-red-600 transition">
+                    <svg class="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <button id="clear-search" class="hidden absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-sm font-bold">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAVEGACIÓN POR CATEGORÍAS -->
+        <nav aria-label="Navegación principal" class="border-b border-zinc-300 dark:border-zinc-800 py-3 sticky top-0 z-30 bg-paper/95 dark:bg-zinc-950/95 backdrop-blur-sm">
+            <ul id="category-nav" class="flex items-center justify-start sm:justify-center gap-2 sm:gap-6 overflow-x-auto no-scrollbar text-sm font-semibold">
+                <li><button data-category="Todas" class="nav-btn active-cat px-3 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 transition whitespace-nowrap">Portada</button></li>
+                <li><button data-category="Política" class="nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap">Política</button></li>
+                <li><button data-category="Economía" class="nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap">Economía</button></li>
+                <li><button data-category="Tecnología" class="nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap">Tecnología</button></li>
+                <li><button data-category="Cultura" class="nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap">Cultura</button></li>
+                <li><button data-category="Deportes" class="nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap">Deportes</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- CINTA DE ÚLTIMA HORA -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+        <div class="bg-red-800 text-white rounded-lg overflow-hidden flex items-center shadow-sm">
+            <div class="bg-red-950 px-3 sm:px-4 py-2 text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 shrink-0 z-10">
+                <span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+                Última Hora
+            </div>
+            <div class="overflow-hidden py-2 flex-1 relative">
+                <div class="animate-ticker text-xs sm:text-sm font-medium">
+                    <span class="mx-6">• Cumbre Climática 2026: 45 países firman el nuevo acuerdo vinculante de transición energética limpia.</span>
+                    <span class="mx-6">• El Banco Central anuncia estabilidad en las tasas de interés tras el reporte trimestral de inflación.</span>
+                    <span class="mx-6">• Avance histórico en computación cuántica logra resolver simulaciones moleculares en segundos.</span>
+                    <span class="mx-6">• Selección Nacional confirma convocatoria oficial para los partidos amistosos de cierre de año.</span>
+                    <span class="mx-6">• Cumbre Climática 2026: 45 países firman el nuevo acuerdo vinculante de transición energética limpia.</span>
+                    <span class="mx-6">• El Banco Central anuncia estabilidad en las tasas de interés tras el reporte trimestral de inflación.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div id="filter-banner" class="hidden mb-6 p-4 rounded-xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <span class="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">Mostrando resultados para:</span>
+                <h2 id="filter-title" class="font-serif text-2xl font-bold text-zinc-900 dark:text-white">Categoría</h2>
+            </div>
+            <button onclick="resetFilters()" class="text-sm font-semibold text-red-800 dark:text-red-400 hover:underline">
+                ← Volver a la Portada completa
+            </button>
+        </div>
+
+        <section id="hero-section" class="mb-12 border-b border-zinc-300 dark:border-zinc-800 pb-10">
+            <div id="hero-container" class="grid grid-cols-1 lg:grid-cols-12 gap-8"></div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div class="lg:col-span-8 space-y-12" id="articles-feed"></div>
+
+            <!-- BARRA LATERAL -->
+            <aside class="lg:col-span-4 space-y-8">
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">El Tiempo Hoy</span>
+                        <select id="city-weather-select" class="text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md px-2 py-1 focus:outline-none">
+                            <option value="tlaxcala">Tlaxcala, Tlax.</option>
+                            <option value="cdmx">Ciudad de México</option>
+                            <option value="madrid">Madrid, España</option>
+                        </select>
+                    </div>
+                    <div id="weather-display" class="flex items-center justify-between">
+                        <div>
+                            <div class="text-3xl font-bold font-serif text-zinc-900 dark:text-white">19°C</div>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">Parcialmente nublado</p>
+                            <p class="text-xs text-zinc-400 mt-1">Máx: 22° • Mín: 8° • Humedad: 48%</p>
+                        </div>
+                        <div class="text-4xl">⛅</div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+                    <h3 class="font-serif text-xl font-bold border-b-2 border-red-800 pb-2 mb-5 flex items-center justify-between">
+                        <span>Lo más leído</span>
+                        <span class="text-xs font-sans font-normal text-zinc-400 uppercase tracking-wider">Top 5</span>
+                    </h3>
+                    <ol id="most-read-list" class="space-y-4"></ol>
+                </div>
+
+                <div id="newsletter-box" class="bg-zinc-900 dark:bg-zinc-900 text-white border border-zinc-800 rounded-xl p-6 shadow-md relative overflow-hidden">
+                    <div class="relative z-10">
+                        <span class="inline-block px-2.5 py-1 bg-red-800 text-[11px] font-bold uppercase tracking-wider rounded mb-3">Edición Matutina</span>
+                        <h3 class="font-serif text-2xl font-bold mb-2">El Observador en tu correo</h3>
+                        <p class="text-sm text-zinc-300 mb-4 leading-relaxed">
+                            Recibe cada mañana a las 7:00 AM un resumen curado por nuestros editores con las claves políticas, económicas y culturales del día.
+                        </p>
+                        <form id="newsletter-form" class="space-y-3">
+                            <input type="email" id="newsletter-email" required placeholder="tu.correo@ejemplo.com" 
+                                class="w-full px-3.5 py-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-400 text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+                            <button type="submit" class="w-full bg-red-700 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded-lg transition text-sm shadow">
+                                Suscribirme gratis
+                            </button>
+                        </form>
+                        <p class="text-[11px] text-zinc-400 mt-3">Sin spam. Puedes cancelar tu suscripción con un clic.</p>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/70 dark:bg-zinc-900/60 border border-amber-200/80 dark:border-zinc-800 rounded-xl p-6">
+                    <span class="text-xs font-bold uppercase tracking-widest text-red-800 dark:text-red-400">Columna de Opinión</span>
+                    <blockquote class="font-serif italic text-lg text-zinc-900 dark:text-zinc-100 mt-2 mb-3">
+                        “La inteligencia artificial no reemplazará al periodismo de investigación; al contrario, hace más urgente que nunca la verificación humana en el terreno.”
+                    </blockquote>
+                    <div class="flex items-center gap-3 mt-4 pt-3 border-t border-amber-200/60 dark:border-zinc-800">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80" alt="Elena Valdés" class="w-10 h-10 rounded-full object-cover" onerror="this.src='https://placehold.co/100x100/333/fff?text=EV'">
+                        <div>
+                            <p class="text-sm font-bold text-zinc-900 dark:text-white">Dra. Elena Valdés</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Directora Editorial</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- MODAL DE LECTURA COMPLETA -->
+    <div id="article-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm overflow-y-auto p-4 sm:p-6 md:p-10">
+        <div class="max-w-3xl mx-auto bg-paper dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-300 dark:border-zinc-700 overflow-hidden my-4">
+            <div class="sticky top-0 z-20 bg-paper/95 dark:bg-zinc-900/95 backdrop-blur px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <span id="modal-category" class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded bg-red-800 text-white">Categoría</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="shareCurrentArticle()" class="text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        Compartir
+                    </button>
+                    <button onclick="closeArticleModal()" aria-label="Cerrar artículo" class="p-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-red-800 hover:text-white transition font-bold text-sm px-3">
+                        Cerrar ✕
+                    </button>
+                </div>
+            </div>
+
+            <article class="p-6 sm:p-10">
+                <h2 id="modal-title" class="font-serif text-3xl sm:text-4xl font-bold text-zinc-950 dark:text-white leading-tight mb-4"></h2>
+                <p id="modal-subtitle" class="text-lg text-zinc-600 dark:text-zinc-300 mb-6 leading-relaxed"></p>
+                
+                <div class="flex flex-wrap items-center justify-between gap-4 py-3 border-y border-zinc-200 dark:border-zinc-800 mb-6 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-zinc-900 dark:text-zinc-200" id="modal-author"></span>
+                        <span>•</span>
+                        <span id="modal-date"></span>
+                    </div>
+                    <span id="modal-readtime" class="font-medium text-red-800 dark:text-red-400"></span>
+                </div>
+
+                <figure class="mb-8 relative group">
+                    <img id="modal-image" src="" alt="Imagen de la noticia" class="w-full h-64 sm:h-96 object-cover rounded-xl shadow-md">
+                    <button type="button" onclick="openImageEditor(activeArticleId, event)" class="edit-photo-btn absolute bottom-3 right-3 z-10 bg-zinc-950/85 hover:bg-red-800 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>Cambiar foto</span>
+                    </button>
+                    <figcaption id="modal-caption" class="text-xs text-zinc-500 dark:text-zinc-400 mt-2 italic"></figcaption>
+                </figure>
+
+                <div id="modal-body" class="prose dark:prose-invert max-w-none space-y-4 text-zinc-800 dark:text-zinc-200 leading-relaxed text-base sm:text-lg"></div>
+
+                <div class="mt-12 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800">
+                    <h4 class="font-serif text-xl font-bold mb-4">Comentarios de los lectores (<span id="comments-count">2</span>)</h4>
+                    <form id="comment-form" class="mb-6 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input type="text" id="comment-author" required placeholder="Tu nombre" class="px-3 py-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-red-800">
+                        </div>
+                        <textarea id="comment-text" rows="3" required placeholder="Comparte tu opinión respetuosa sobre esta noticia..." class="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-red-800"></textarea>
+                        <button type="submit" class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
+                            Publicar comentario
+                        </button>
+                    </form>
+                    <div id="comments-list" class="space-y-4"></div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDICIÓN DE IMAGEN Y PIE DE FOTO -->
+    <div id="image-editor-modal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-sm overflow-y-auto p-4 sm:p-6 flex items-center justify-center">
+        <div class="max-w-lg w-full bg-paper dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-300 dark:border-zinc-700 overflow-hidden my-auto">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-100/70 dark:bg-zinc-950/60">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">📷</span>
+                    <h3 class="font-serif text-xl font-bold text-zinc-900 dark:text-white">Editar Fotografía del Artículo</h3>
+                </div>
+                <button type="button" onclick="closeImageEditor()" class="p-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-red-800 hover:text-white transition text-xs font-bold px-2.5">
+                    ✕
+                </button>
+            </div>
+
+            <form id="image-editor-form" class="p-6 space-y-5">
+                <div>
+                    <span class="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">Vista previa actual</span>
+                    <div class="relative rounded-xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 aspect-[16/9] border border-zinc-300 dark:border-zinc-700">
+                        <img id="editor-preview-img" src="" alt="Vista previa" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x450/27272a/ffffff?text=URL+de+imagen+no+válida'">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex border-b border-zinc-200 dark:border-zinc-800 mb-4 text-xs font-bold uppercase tracking-wider">
+                        <button type="button" id="tab-upload-btn" onclick="switchEditorTab('upload')" class="px-4 py-2.5 border-b-2 border-red-800 text-red-800 dark:text-red-400 transition">
+                            Subir desde dispositivo
+                        </button>
+                        <button type="button" id="tab-url-btn" onclick="switchEditorTab('url')" class="px-4 py-2.5 border-b-2 border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition">
+                            Pegar enlace (URL)
+                        </button>
+                    </div>
+
+                    <div id="editor-tab-upload">
+                        <div id="drop-zone" class="border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-red-800 dark:hover:border-red-500 rounded-xl p-6 text-center cursor-pointer transition bg-white/60 dark:bg-zinc-950/40">
+                            <input type="file" id="editor-file-input" accept="image/*" class="hidden">
+                            <svg class="w-8 h-8 mx-auto text-zinc-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Haz clic para elegir una foto o arrástrala aquí</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Soporta JPG, PNG, WEBP o GIF (se guarda en tu navegador)</p>
+                        </div>
+                    </div>
+
+                    <div id="editor-tab-url" class="hidden">
+                        <label for="editor-url-input" class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">Enlace directo de la imagen (https://...)</label>
+                        <input type="url" id="editor-url-input" placeholder="https://ejemplo.com/fotografia.jpg" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-red-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="editor-caption-input" class="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Pie de foto (Caption)</label>
+                    <input type="text" id="editor-caption-input" placeholder="Describe la fotografía o créditos del autor..." class="w-full px-3.5 py-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-red-800">
+                </div>
+
+                <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                    <button type="button" onclick="restoreSingleArticleImage()" class="text-xs font-semibold text-zinc-500 hover:text-red-800 dark:hover:text-red-400 underline">
+                        Restaurar foto original de esta nota
+                    </button>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="button" onclick="closeImageEditor()" class="px-4 py-2 rounded-lg text-sm font-semibold border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold bg-red-800 hover:bg-red-900 text-white shadow transition">
+                            Guardar cambios
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-zinc-950 text-zinc-300 border-t-4 border-red-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-zinc-800">
+                <div>
+                    <h2 class="font-serif text-2xl font-black text-white uppercase tracking-tight mb-3">El Observador Global</h2>
+                    <p class="text-sm text-zinc-400 leading-relaxed mb-4">
+                        Periodismo independiente, verificación de datos y análisis profundo desde México para el mundo hispanohablante.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Secciones</h3>
+                    <ul class="space-y-2 text-sm text-zinc-400">
+                        <li><button onclick="filterByCategory('Política')" class="hover:text-white transition">Política Nacional e Internacional</button></li>
+                        <li><button onclick="filterByCategory('Economía')" class="hover:text-white transition">Economía y Finanzas</button></li>
+                        <li><button onclick="filterByCategory('Tecnología')" class="hover:text-white transition">Ciencia y Tecnología</button></li>
+                        <li><button onclick="filterByCategory('Cultura')" class="hover:text-white transition">Cultura y Sociedad</button></li>
+                        <li><button onclick="filterByCategory('Deportes')" class="hover:text-white transition">Deportes</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Institucional</h3>
+                    <ul class="space-y-2 text-sm text-zinc-400">
+                        <li><a href="#info" onclick="showToast('Código Ético y Principios Editoriales')" class="hover:text-white transition">Código Ético y Editorial</a></li>
+                        <li><a href="#info" onclick="showToast('Equipo de Redacción y Corresponsales')" class="hover:text-white transition">Nuestro Equipo</a></li>
+                        <li><a href="#info" onclick="showToast('Portal de Suscripciones Corporativas')" class="hover:text-white transition">Suscripciones Institucionales</a></li>
+                        <li><a href="#info" onclick="showToast('Contacto de Prensa: redaccion@observadorglobal.mx')" class="hover:text-white transition">Contacto y Redacción</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Legal y Privacidad</h3>
+                    <ul class="space-y-2 text-sm text-zinc-400">
+                        <li><a href="#legal" onclick="showToast('Aviso de Privacidad Integral')" class="hover:text-white transition">Aviso de Privacidad</a></li>
+                        <li><a href="#legal" onclick="showToast('Términos y Condiciones de Uso')" class="hover:text-white transition">Términos y Condiciones</a></li>
+                        <li><a href="#legal" onclick="showToast('Política de Cookies')" class="hover:text-white transition">Política de Cookies</a></li>
+                        <li><a href="#legal" onclick="showToast('Hemeroteca Digital 1932-2026')" class="hover:text-white transition">Hemeroteca Digital</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-zinc-500 gap-4">
+                <p>© 2026 El Observador Global S.A. de C.V. Todos los derechos reservados.</p>
+                <p>Impreso y editado en México • ISSN 2448-9021</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA E INTERACTIVIDAD (JAVASCRIPT) -->
+    <script>
+        const articlesData = [
+            {
+                id: 1,
+                featured: true,
+                category: "Política",
+                title: "Acuerdo histórico en la Cumbre de Energía Limpia redefine la inversión industrial en América Latina",
+                subtitle: "Más de cuarenta naciones suscriben un pacto de cooperación tecnológica y financiamiento verde para acelerar la descarbonización antes de 2035.",
+                author: "Carlos Mendoza y Sofía Alarcón",
+                date: "12 de noviembre de 2026",
+                readTime: "6 min de lectura",
+                views: 9840,
+                image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80",
+                caption: "Plenario principal durante la firma de los acuerdos multilaterales de energía. Foto: Archivo Editorial.",
+                content: [
+                    "En una jornada marcada por intensas negociaciones diplomáticas, los representantes de 45 países han ratificado esta mañana el Tratado de Infraestructura Energética Sostenible, un mecanismo inédito que movilizará fondos públicos y privados hacia redes eléctricas inteligentes y almacenamiento de hidrógeno verde.",
+                    "Para América Latina, el acuerdo representa una oportunidad estratégica sin precedentes. Países con alto potencial solar y eólico recibirán transferencia tecnológica directa y créditos preferenciales para modernizar sus parques industriales sin comprometer la estabilidad tarifaria de los hogares.",
+                    "Los analistas coinciden en que el verdadero reto comenzará en el primer trimestre de 2027, cuando los congresos nacionales deban armonizar sus marcos regulatorios para dar certidumbre jurídica a los proyectos transfronterizos."
+                ]
+            },
+            {
+                id: 2,
+                featured: false,
+                secondaryHero: true,
+                category: "Tecnología",
+                title: "Nuevos procesadores neuromórficos reducen en 80% el consumo energético de los centros de datos",
+                subtitle: "La arquitectura inspirada en el cerebro humano promete resolver el cuello de botella eléctrico de la inteligencia artificial generativa.",
+                author: "Javier Ríos",
+                date: "12 de noviembre de 2026",
+                readTime: "4 min de lectura",
+                views: 8420,
+                image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+                caption: "Oblea de silicio con interconexiones neuromórficas de última generación.",
+                content: [
+                    "El crecimiento exponencial de los modelos de inteligencia artificial había encendido las alarmas sobre la sostenibilidad eléctrica de los grandes centros de cómputo. Sin embargo, una nueva generación de chips neuromórficos presentados esta semana demuestra que es posible procesar datos en el mismo lugar donde se almacenan.",
+                    "A diferencia de la arquitectura tradicional de Von Neumann, estos circuitos activan únicamente las neuronas artificiales necesarias para cada tarea, logrando reducciones drásticas en disipación térmica y consumo energético."
+                ]
+            },
+            {
+                id: 3,
+                featured: false,
+                secondaryHero: true,
+                category: "Economía",
+                title: "El comercio regional impulsa el crecimiento manufacturero por sexto trimestre consecutivo",
+                subtitle: "La relocalización de cadenas de suministro consolida nuevos polos logísticos en el centro y norte del país.",
+                author: "Mariana Treviño",
+                date: "12 de noviembre de 2026",
+                readTime: "5 min de lectura",
+                views: 7650,
+                image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+                caption: "Distrito financiero y corporativo durante la apertura de mercados.",
+                content: [
+                    "Los indicadores industriales publicados este jueves confirman la resiliencia del sector manufacturero frente a la volatilidad global. La exportación de componentes electrónicos, dispositivos médicos y autopartes eléctricas lideró el avance trimestral.",
+                    "Especialistas en comercio exterior destacan que la inversión en capacitación técnica y conectividad ferroviaria ha sido determinante para absorber la nueva demanda internacional."
+                ]
+            },
+            {
+                id: 4,
+                featured: false,
+                secondaryHero: true,
+                category: "Cultura",
+                title: "Restauran murales inéditos del siglo XVI en el corazón histórico de Tlaxcala",
+                subtitle: "Un equipo interdisciplinario de arqueólogos y restauradores saca a la luz pigmentos naturales conservados bajo capas de cal.",
+                author: "Lucía Paredes",
+                date: "12 de noviembre de 2026",
+                readTime: "5 min de lectura",
+                views: 6910,
+                image: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=800&q=80",
+                caption: "Detalle de los trabajos de conservación patrimonial en el conjunto conventual.",
+                content: [
+                    "Tras dieciocho meses de minucioso trabajo con técnicas láser y análisis espectroscópico, el Instituto Nacional de Antropología presentó los resultados de la restauración de un conjunto mural novohispano de valor incalculable.",
+                    "Las escenas revelan el sincretismo artístico de los tlacuilos indígenas y los maestros europeos, aportando nuevas claves sobre la historia visual del altiplano central."
+                ]
+            },
+            {
+                id: 5,
+                featured: false,
+                category: "Política",
+                title: "Reforma de transparencia digital obligará a publicar algoritmos usados en servicios públicos",
+                subtitle: "Organizaciones civiles celebran la medida que busca evitar sesgos en la asignación de becas y apoyos sociales.",
+                author: "Andrés Villalobos",
+                date: "12 de noviembre de 2026",
+                readTime: "4 min de lectura",
+                views: 5430,
+                image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80",
+                caption: "Sesión legislativa donde se aprobó el dictamen de auditoría algorítmica.",
+                content: [
+                    "Con amplio respaldo parlamentario, se aprobó la ley que establece auditorías independientes para cualquier sistema automatizado empleado por dependencias gubernamentales en la toma de decisiones administrativas.",
+                    "Los ciudadanos tendrán derecho a solicitar explicaciones comprensibles cuando un sistema automatizado determine la elegibilidad de un trámite."
+                ]
+            },
+            {
+                id: 6,
+                featured: false,
+                category: "Economía",
+                title: "Banca digital supera por primera vez a las sucursales físicas en créditos a pequeñas empresas",
+                subtitle: "El uso de historiales de facturación electrónica agiliza el financiamiento para comercios locales.",
+                author: "Mariana Treviño",
+                date: "12 de noviembre de 2026",
+                readTime: "3 min de lectura",
+                views: 4980,
+                image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80",
+                caption: "Emprendedores gestionando operaciones financieras desde plataformas móviles.",
+                content: [
+                    "La digitalización de los pagos cotidianos ha transformado el acceso al crédito productivo. Durante el último año, más del 58% de los microcréditos empresariales se originaron íntegramente mediante plataformas digitales.",
+                    "Esto ha permitido reducir las tasas de interés promedio gracias a una evaluación de riesgo más precisa y menores costos operativos."
+                ]
+            },
+            {
+                id: 7,
+                featured: false,
+                category: "Tecnología",
+                title: "Telescopio espacial detecta vapor de agua en la atmósfera de un exoplaneta templado",
+                subtitle: "El hallazgo a 48 años luz refuerza los modelos sobre habitabilidad en sistemas de estrellas enanas rojas.",
+                author: "Javier Ríos",
+                date: "12 de noviembre de 2026",
+                readTime: "5 min de lectura",
+                views: 6120,
+                image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+                caption: "Representación artística de observación orbital de atmósferas exoplanetarias.",
+                content: [
+                    "Mediante espectroscopía de transmisión infrarroja, un consorcio internacional de astrónomos confirmó la firma química de vapor de agua y dióxido de carbono en un planeta rocoso situado en la zona habitable de su estrella.",
+                    "Las próximas observaciones buscarán determinar la presencia de nubes altas y ciclos térmicos estables."
+                ]
+            },
+            {
+                id: 8,
+                featured: false,
+                category: "Deportes",
+                title: "Maratón Internacional de Altura rompe récord de participación con 35 mil corredores",
+                subtitle: "Atletas de élite destacan la exigencia fisiológica y el respaldo del público a lo largo de toda la ruta.",
+                author: "Roberto Salazar",
+                date: "12 de noviembre de 2026",
+                readTime: "3 min de lectura",
+                views: 4310,
+                image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=800&q=80",
+                caption: "Pelotón puntero durante los primeros kilómetros de la competencia.",
+                content: [
+                    "Con una organización impecable y condiciones climáticas ideales, la edición 2026 del Maratón Internacional superó todas las marcas previas de asistencia y tiempos clasificatorios.",
+                    "La competencia dejó además una derrama económica histórica para el sector hotelero y gastronómico de la región."
+                ]
+            }
+        ];
+
+        let articleComments = {
+            1: [
+                { author: "Dr. Héctor Domínguez", time: "Hace 2 horas", text: "Excelente cobertura. La clave estará en los mecanismos de auditoría financiera para asegurar que los fondos lleguen a proyectos reales." },
+                { author: "Laura Gómez", time: "Hace 45 min", text: "Es alentador ver cooperación internacional concreta en materia energética." }
+            ]
+        };
+
+        let currentCategory = "Todas";
+        let currentSearch = "";
+        let activeArticleId = null;
+        let editingArticleId = null;
+        let pendingImageDataUrl = null;
+        let globalEditMode = false;
+
+        const originalMediaMap = {};
+        articlesData.forEach(art => {
+            originalMediaMap[art.id] = { image: art.image, caption: art.caption };
+        });
+
+        const STORAGE_KEY_MEDIA = "observador_custom_media_v1";
+
+        function loadSavedMediaFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY_MEDIA);
+                if (!raw) return;
+                const savedMap = JSON.parse(raw);
+                let hasChanges = false;
+                articlesData.forEach(art => {
+                    if (savedMap[art.id]) {
+                        if (savedMap[art.id].image) art.image = savedMap[art.id].image;
+                        if (savedMap[art.id].caption !== undefined) art.caption = savedMap[art.id].caption;
+                        hasChanges = true;
+                    }
+                });
+                updateResetButtonVisibility(hasChanges);
+            } catch (err) {
+                console.warn("No se pudieron cargar imágenes guardadas:", err);
+            }
+        }
+
+        function persistMediaToStorage() {
+            try {
+                const customMap = {};
+                let hasChanges = false;
+                articlesData.forEach(art => {
+                    const orig = originalMediaMap[art.id];
+                    if (art.image !== orig.image || art.caption !== orig.caption) {
+                        customMap[art.id] = { image: art.image, caption: art.caption };
+                        hasChanges = true;
+                    }
+                });
+                if (hasChanges) {
+                    localStorage.setItem(STORAGE_KEY_MEDIA, JSON.stringify(customMap));
+                } else {
+                    localStorage.removeItem(STORAGE_KEY_MEDIA);
+                }
+                updateResetButtonVisibility(hasChanges);
+            } catch (err) {
+                showToast("Aviso: El archivo es muy pesado para guardarse tras recargar, pero se aplicó en esta sesión.");
+            }
+        }
+
+        function updateResetButtonVisibility(hasChanges) {
+            const btn = document.getElementById("reset-images-btn");
+            if (btn) btn.classList.toggle("hidden", !hasChanges);
+        }
+
+        function toggleGlobalEditMode() {
+            globalEditMode = !globalEditMode;
+            const toggleBtn = document.getElementById("edit-mode-toggle");
+            const label = document.getElementById("edit-mode-label");
+            label.textContent = globalEditMode ? "Modo Edición: ON" : "Modo Edición: OFF";
+            if (globalEditMode) {
+                toggleBtn.classList.add("bg-red-800", "text-white", "border-red-800");
+                toggleBtn.classList.remove("text-zinc-700", "dark:text-zinc-300");
+                showToast("Modo Edición activado: haz clic en 'Cambiar foto' sobre cualquier imagen");
+            } else {
+                toggleBtn.classList.remove("bg-red-800", "text-white", "border-red-800");
+                toggleBtn.classList.add("text-zinc-700", "dark:text-zinc-300");
+            }
+            renderNewspaper();
+        }
+
+        function getEditButtonHTML(articleId, compact = false) {
+            const visibilityClass = globalEditMode
+                ? "opacity-100 ring-2 ring-amber-400 bg-red-800"
+                : "opacity-85 sm:opacity-0 sm:group-hover:opacity-100 bg-zinc-950/85 hover:bg-red-800";
+            if (compact) {
+                return `
+                    <button type="button" onclick="openImageEditor(${articleId}, event)" title="Cambiar foto"
+                        class="${visibilityClass} absolute bottom-1 right-1 z-10 text-white p-1.5 rounded-md shadow-md backdrop-blur-sm transition flex items-center gap-1 text-[10px] font-bold">
+                        <span>📷</span>
+                    </button>
+                `;
+            }
+            return `
+                <button type="button" onclick="openImageEditor(${articleId}, event)" title="Editar fotografía"
+                    class="${visibilityClass} absolute bottom-2.5 right-2.5 z-10 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Cambiar foto</span>
+                </button>
+            `;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadSavedMediaFromStorage();
+            renderNewspaper();
+            renderMostRead();
+            setupEventListeners();
+            setupImageEditorListeners();
+        });
+
+        function renderNewspaper() {
+            const heroSection = document.getElementById("hero-section");
+            const heroContainer = document.getElementById("hero-container");
+            const articlesFeed = document.getElementById("articles-feed");
+            const filterBanner = document.getElementById("filter-banner");
+            const filterTitle = document.getElementById("filter-title");
+
+            const filtered = articlesData.filter(art => {
+                const matchesCat = currentCategory === "Todas" || art.category === currentCategory;
+                const query = currentSearch.toLowerCase().trim();
+                const matchesSearch = !query || 
+                    art.title.toLowerCase().includes(query) || 
+                    art.subtitle.toLowerCase().includes(query) ||
+                    art.category.toLowerCase().includes(query) ||
+                    art.author.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+
+            if (currentCategory !== "Todas" || currentSearch.trim() !== "") {
+                filterBanner.classList.remove("hidden");
+                filterTitle.textContent = currentSearch 
+                    ? `Búsqueda: "${currentSearch}" (${filtered.length} resultados)` 
+                    : `Sección: ${currentCategory}`;
+                heroSection.classList.add("hidden");
+            } else {
+                filterBanner.classList.add("hidden");
+                heroSection.classList.remove("hidden");
+            }
+
+            const highlightRing = globalEditMode ? "ring-2 ring-red-700 ring-offset-2 dark:ring-offset-zinc-950" : "";
+
+            if (currentCategory === "Todas" && currentSearch.trim() === "") {
+                const mainStory = articlesData.find(a => a.featured);
+                const sideStories = articlesData.filter(a => a.secondaryHero);
+
+                heroContainer.innerHTML = `
+                    <article onclick="openArticleModal(${mainStory.id})" class="lg:col-span-8 group cursor-pointer flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-zinc-300 dark:border-zinc-800 pb-6 lg:pb-0 lg:pr-8">
+                        <div>
+                            <div class="relative overflow-hidden rounded-xl mb-5 bg-zinc-200 dark:bg-zinc-800 aspect-[16/9] ${highlightRing}">
+                                <img src="${mainStory.image}" alt="${mainStory.title}" 
+                                    onerror="this.src='https://placehold.co/1200x675/1f2937/ffffff?text=El+Observador+Global'"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                <span class="absolute top-3 left-3 bg-red-800 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md shadow">
+                                    ${mainStory.category} • Portada
+                                </span>
+                                ${getEditButtonHTML(mainStory.id, false)}
+                            </div>
+                            <h2 class="font-serif text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-zinc-950 dark:text-white leading-[1.12] group-hover:text-red-800 dark:group-hover:text-red-400 transition mb-3">
+                                ${mainStory.title}
+                            </h2>
+                            <p class="text-base sm:text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
+                                ${mainStory.subtitle}
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                            <span class="font-semibold text-zinc-800 dark:text-zinc-200">Por ${mainStory.author}</span>
+                            <span>${mainStory.readTime}</span>
+                        </div>
+                    </article>
+
+                    <div class="lg:col-span-4 flex flex-col justify-between space-y-6">
+                        ${sideStories.map((story, idx) => `
+                            <article onclick="openArticleModal(${story.id})" class="group cursor-pointer ${idx !== sideStories.length - 1 ? 'border-b border-zinc-200 dark:border-zinc-800 pb-5' : ''}">
+                                <div class="flex gap-4 items-start">
+                                    <div class="flex-1">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-red-800 dark:text-red-400">${story.category}</span>
+                                        <h3 class="font-serif text-lg font-bold text-zinc-900 dark:text-white leading-snug mt-1 group-hover:text-red-800 dark:group-hover:text-red-400 transition">
+                                            ${story.title}
+                                        </h3>
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                                            ${story.author} • ${story.readTime}
+                                        </p>
+                                    </div>
+                                    <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0 bg-zinc-200 dark:bg-zinc-800 ${highlightRing}">
+                                        <img src="${story.image}" alt="${story.title}" 
+                                            onerror="this.src='https://placehold.co/200x200/27272a/ffffff?text=Noticia'"
+                                            class="w-full h-full object-cover group-hover:opacity-90 transition">
+                                        ${getEditButtonHTML(story.id, true)}
+                                    </div>
+                                </div>
+                            </article>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (filtered.length === 0) {
+                articlesFeed.innerHTML = `
+                    <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <p class="font-serif text-2xl font-bold mb-2">No se encontraron noticias</p>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Intenta con otras palabras clave o explora todas nuestras secciones.</p>
+                        <button onclick="resetFilters()" class="px-4 py-2 bg-red-800 text-white rounded-lg text-sm font-semibold">Ver todas las noticias</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const feedArticles = (currentCategory === "Todas" && currentSearch.trim() === "")
+                ? filtered.filter(a => !a.featured)
+                : filtered;
+
+            articlesFeed.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between border-b-2 border-zinc-900 dark:border-zinc-200 pb-2 mb-6">
+                        <h3 class="font-serif text-2xl font-bold uppercase tracking-tight">
+                            ${currentCategory === "Todas" ? "Últimas Noticias y Análisis" : currentCategory}
+                        </h3>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">${feedArticles.length} artículos</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${feedArticles.map(art => `
+                            <article onclick="openArticleModal(${art.id})" class="group cursor-pointer bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                                <div>
+                                    <div class="relative h-48 overflow-hidden bg-zinc-200 dark:bg-zinc-800 ${highlightRing}">
+                                        <img src="${art.image}" alt="${art.title}" 
+                                            onerror="this.src='https://placehold.co/600x400/27272a/ffffff?text=El+Observador'"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                        <span class="absolute top-3 left-3 bg-zinc-900/85 text-white text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
+                                            ${art.category}
+                                        </span>
+                                        ${getEditButtonHTML(art.id, false)}
+                                    </div>
+                                    <div class="p-5">
+                                        <h4 class="font-serif text-xl font-bold text-zinc-900 dark:text-white leading-snug mb-2 group-hover:text-red-800 dark:group-hover:text-red-400 transition">
+                                            ${art.title}
+                                        </h4>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3 leading-relaxed">
+                                            ${art.subtitle}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="px-5 py-3 bg-zinc-50 dark:bg-zinc-950/50 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                                    <span class="font-medium">${art.author}</span>
+                                    <span class="text-red-800 dark:text-red-400 font-semibold">${art.readTime}</span>
+                                </div>
+                            </article>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMostRead() {
+            const top5 = [...articlesData].sort((a, b) => b.views - a.views).slice(0, 5);
+            const listEl = document.getElementById("most-read-list");
+            listEl.innerHTML = top5.map((art, index) => `
+                <li onclick="openArticleModal(${art.id})" class="group cursor-pointer flex items-start gap-3.5 pb-3 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0 last:pb-0">
+                    <span class="font-serif text-2xl font-black text-red-800/80 dark:text-red-500 leading-none w-6 shrink-0">
+                        ${index + 1}
+                    </span>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">${art.category}</span>
+                        <h4 class="font-serif text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-red-800 dark:group-hover:text-red-400 transition leading-snug">
+                            ${art.title}
+                        </h4>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll(".nav-btn").forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.className = "nav-btn active-cat px-3 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 transition whitespace-nowrap";
+                } else {
+                    btn.className = "nav-btn px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition whitespace-nowrap";
+                }
+            });
+            renderNewspaper();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetFilters() {
+            currentCategory = "Todas";
+            currentSearch = "";
+            document.getElementById("search-input").value = "";
+            document.getElementById("clear-search").classList.add("hidden");
+            filterByCategory("Todas");
+        }
+
+        function openArticleModal(id) {
+            const art = articlesData.find(a => a.id === id);
+            if (!art) return;
+            activeArticleId = id;
+
+            document.getElementById("modal-category").textContent = art.category;
+            document.getElementById("modal-title").textContent = art.title;
+            document.getElementById("modal-subtitle").textContent = art.subtitle;
+            document.getElementById("modal-author").textContent = `Por ${art.author}`;
+            document.getElementById("modal-date").textContent = art.date;
+            document.getElementById("modal-readtime").textContent = art.readTime;
+            document.getElementById("modal-image").src = art.image;
+            document.getElementById("modal-caption").textContent = art.caption;
+
+            const bodyEl = document.getElementById("modal-body");
+            bodyEl.innerHTML = art.content.map(p => `<p>${p}</p>`).join('');
+
+            renderModalComments(id);
+
+            const modal = document.getElementById("article-modal");
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeArticleModal() {
+            document.getElementById("article-modal").classList.add("hidden");
+            document.body.style.overflow = "";
+            activeArticleId = null;
+        }
+
+        function openImageEditor(articleId, event) {
+            if (event) event.stopPropagation();
+            const art = articlesData.find(a => a.id === articleId);
+            if (!art) return;
+
+            editingArticleId = articleId;
+            pendingImageDataUrl = null;
+
+            document.getElementById("editor-preview-img").src = art.image;
+            document.getElementById("editor-url-input").value = art.image.startsWith("data:") ? "" : art.image;
+            document.getElementById("editor-caption-input").value = art.caption || "";
+            document.getElementById("editor-file-input").value = "";
+
+            switchEditorTab("upload");
+            document.getElementById("image-editor-modal").classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeImageEditor() {
+            document.getElementById("image-editor-modal").classList.add("hidden");
+            if (!activeArticleId) {
+                document.body.style.overflow = "";
+            }
+            editingArticleId = null;
+            pendingImageDataUrl = null;
+        }
+
+        function switchEditorTab(tab) {
+            const uploadTab = document.getElementById("editor-tab-upload");
+            const urlTab = document.getElementById("editor-tab-url");
+            const uploadBtn = document.getElementById("tab-upload-btn");
+            const urlBtn = document.getElementById("tab-url-btn");
+
+            if (tab === "upload") {
+                uploadTab.classList.remove("hidden");
+                urlTab.classList.add("hidden");
+                uploadBtn.className = "px-4 py-2.5 border-b-2 border-red-800 text-red-800 dark:text-red-400 transition";
+                urlBtn.className = "px-4 py-2.5 border-b-2 border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition";
+            } else {
+                uploadTab.classList.add("hidden");
+                urlTab.classList.remove("hidden");
+                urlBtn.className = "px-4 py-2.5 border-b-2 border-red-800 text-red-800 dark:text-red-400 transition";
+                uploadBtn.className = "px-4 py-2.5 border-b-2 border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition";
+            }
+        }
+
+        function handleImageFileSelection(file) {
+            if (!file || !file.type.startsWith("image/")) {
+                showToast("Por favor selecciona un archivo de imagen válido");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingImageDataUrl = e.target.result;
+                document.getElementById("editor-preview-img").src = pendingImageDataUrl;
+                document.getElementById("editor-url-input").value = "";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function restoreSingleArticleImage() {
+            if (!editingArticleId) return;
+            const orig = originalMediaMap[editingArticleId];
+            if (!orig) return;
+            pendingImageDataUrl = null;
+            document.getElementById("editor-preview-img").src = orig.image;
+            document.getElementById("editor-url-input").value = orig.image;
+            document.getElementById("editor-caption-input").value = orig.caption;
+            showToast("Vista previa restablecida a la imagen original");
+        }
+
+        function resetAllCustomImages() {
+            articlesData.forEach(art => {
+                const orig = originalMediaMap[art.id];
+                if (orig) {
+                    art.image = orig.image;
+                    art.caption = orig.caption;
+                }
+            });
+            localStorage.removeItem(STORAGE_KEY_MEDIA);
+            updateResetButtonVisibility(false);
+            renderNewspaper();
+            if (activeArticleId) {
+                const currentArt = articlesData.find(a => a.id === activeArticleId);
+                if (currentArt) {
+                    document.getElementById("modal-image").src = currentArt.image;
+                    document.getElementById("modal-caption").textContent = currentArt.caption;
+                }
+            }
+            showToast("Todas las fotografías originales han sido restauradas");
+        }
+
+        function setupImageEditorListeners() {
+            const dropZone = document.getElementById("drop-zone");
+            const fileInput = document.getElementById("editor-file-input");
+            const urlInput = document.getElementById("editor-url-input");
+            const editorForm = document.getElementById("image-editor-form");
+            const editorModal = document.getElementById("image-editor-modal");
+
+            dropZone.addEventListener("click", () => fileInput.click());
+
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    handleImageFileSelection(e.target.files[0]);
+                }
+            });
+
+            dropZone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropZone.classList.add("border-red-800", "bg-red-50/40", "dark:bg-red-950/20");
+            });
+
+            dropZone.addEventListener("dragleave", () => {
+                dropZone.classList.remove("border-red-800", "bg-red-50/40", "dark:bg-red-950/20");
+            });
+
+            dropZone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropZone.classList.remove("border-red-800", "bg-red-50/40", "dark:bg-red-950/20");
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleImageFileSelection(e.dataTransfer.files[0]);
+                }
+            });
+
+            urlInput.addEventListener("input", (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    pendingImageDataUrl = null;
+                    document.getElementById("editor-preview-img").src = val;
+                }
+            });
+
+            editorForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                if (!editingArticleId) return;
+                const art = articlesData.find(a => a.id === editingArticleId);
+                if (!art) return;
+
+                const urlVal = urlInput.value.trim();
+                const newCaption = document.getElementById("editor-caption-input").value.trim();
+
+                if (pendingImageDataUrl) {
+                    art.image = pendingImageDataUrl;
+                } else if (urlVal) {
+                    art.image = urlVal;
+                }
+                art.caption = newCaption || art.caption;
+
+                persistMediaToStorage();
+                renderNewspaper();
+
+                if (activeArticleId === editingArticleId) {
+                    document.getElementById("modal-image").src = art.image;
+                    document.getElementById("modal-caption").textContent = art.caption;
+                }
+
+                closeImageEditor();
+                showToast("Fotografía y pie de foto actualizados");
+            });
+
+            editorModal.addEventListener("click", (e) => {
+                if (e.target.id === "image-editor-modal") closeImageEditor();
+            });
+        }
+
+        function renderModalComments(articleId) {
+            const comments = articleComments[articleId] || [
+                { author: "Suscriptor Verificado", time: "Hace 1 hora", text: "Gran análisis periodístico, muy claro y bien documentado." }
+            ];
+            document.getElementById("comments-count").textContent = comments.length;
+            const list = document.getElementById("comments-list");
+            list.innerHTML = comments.map(c => `
+                <div class="p-4 rounded-xl bg-white dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-bold text-zinc-900 dark:text-white">${c.author}</span>
+                        <span class="text-xs text-zinc-400">${c.time}</span>
+                    </div>
+                    <p class="text-sm text-zinc-700 dark:text-zinc-300">${c.text}</p>
+                </div>
+            `).join('');
+        }
+
+        function shareCurrentArticle() {
+            const art = articlesData.find(a => a.id === activeArticleId);
+            if (!art) return;
+            const shareText = `${art.title} - Léelo en El Observador Global`;
+            const tempInput = document.createElement("input");
+            tempInput.value = shareText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast("Enlace y titular copiados al portapapeles");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast-notification");
+            document.getElementById("toast-message").textContent = msg;
+            toast.classList.remove("translate-y-24", "opacity-0");
+            setTimeout(() => {
+                toast.classList.add("translate-y-24", "opacity-0");
+            }, 3200);
+        }
+
+        function scrollToNewsletter() {
+            document.getElementById("newsletter-box").scrollIntoView({ behavior: "smooth" });
+            document.getElementById("newsletter-email").focus();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll(".nav-btn").forEach(btn => {
+                btn.addEventListener("click", () => filterByCategory(btn.dataset.category));
+            });
+
+            const searchInput = document.getElementById("search-input");
+            const clearBtn = document.getElementById("clear-search");
+            searchInput.addEventListener("input", (e) => {
+                currentSearch = e.target.value;
+                clearBtn.classList.toggle("hidden", currentSearch.length === 0);
+                renderNewspaper();
+            });
+            clearBtn.addEventListener("click", () => {
+                searchInput.value = "";
+                currentSearch = "";
+                clearBtn.classList.add("hidden");
+                renderNewspaper();
+            });
+
+            const themeBtn = document.getElementById("theme-toggle");
+            const themeLabel = document.getElementById("theme-label");
+            themeBtn.addEventListener("click", () => {
+                const isDark = document.documentElement.classList.toggle("dark");
+                themeLabel.textContent = isDark ? "Modo Claro" : "Modo Oscuro";
+            });
+
+            const weatherData = {
+                tlaxcala: { temp: "19°C", desc: "Parcialmente nublado", extra: "Máx: 22° • Mín: 8° • Humedad: 48%", icon: "⛅" },
+                cdmx: { temp: "21°C", desc: "Soleado con brisa ligera", extra: "Máx: 24° • Mín: 11° • Humedad: 42%", icon: "☀️" },
+                madrid: { temp: "14°C", desc: "Despejado y fresco", extra: "Máx: 16° • Mín: 6° • Humedad: 55%", icon: "🌤️" }
+            };
+            document.getElementById("city-weather-select").addEventListener("change", (e) => {
+                const w = weatherData[e.target.value];
+                document.getElementById("weather-display").innerHTML = `
+                    <div>
+                        <div class="text-3xl font-bold font-serif text-zinc-900 dark:text-white">${w.temp}</div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">${w.desc}</p>
+                        <p class="text-xs text-zinc-400 mt-1">${w.extra}</p>
+                    </div>
+                    <div class="text-4xl">${w.icon}</div>
+                `;
+            });
+
+            document.getElementById("newsletter-form").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById("newsletter-email");
+                showToast(`¡Gracias! Suscripción confirmada para ${emailInput.value}`);
+                emailInput.value = "";
+            });
+
+            document.getElementById("comment-form").addEventListener("submit", (e) => {
+                e.preventDefault();
+                if (!activeArticleId) return;
+                const author = document.getElementById("comment-author").value.trim();
+                const text = document.getElementById("comment-text").value.trim();
+                if (!author || !text) return;
+
+                if (!articleComments[activeArticleId]) {
+                    articleComments[activeArticleId] = [
+                        { author: "Suscriptor Verificado", time: "Hace 1 hora", text: "Gran análisis periodístico, muy claro y bien documentado." }
+                    ];
+                }
+                articleComments[activeArticleId].unshift({
+                    author,
+                    time: "Justo ahora",
+                    text
+                });
+
+                document.getElementById("comment-author").value = "";
+                document.getElementById("comment-text").value = "";
+                renderModalComments(activeArticleId);
+                showToast("Comentario publicado correctamente");
+            });
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    if (!document.getElementById("image-editor-modal").classList.contains("hidden")) {
+                        closeImageEditor();
+                    } else {
+                        closeArticleModal();
+                    }
+                }
+            });
+            document.getElementById("article-modal").classList.add("hidden"); // Asegurar cerrado inicial
+        }
+    </script>
+</body>
+</html>

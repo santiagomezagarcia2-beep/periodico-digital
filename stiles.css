@@ -1,0 +1,27 @@
+@keyframes ticker {
+0% { transform: translate3d(0, 0, 0); }
+100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-ticker {
+display: inline-flex;
+white-space: nowrap;
+animation: ticker 35s linear infinite;
+}
+
+.animate-ticker:hover {
+animation-play-state: paused;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+display: none;
+}
+
+.no-scrollbar {
+-ms-overflow-style: none;
+scrollbar-width: none;
+}
+
+.editorial-border {
+border-bottom: 3px double currentColor;
+}
